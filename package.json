@@ -4,7 +4,10 @@
   "description": "Add validation to Cantrip",
   "main": "server.js",
   "dependencies": {
-    "lodash": "~2.4.1"
+    "lodash": "~2.4.1",
+    "cantrip-validate-boolean": "git+https://github.com/borlaym/cantrip-validate-boolean.git",
+    "cantrip-validate-number": "git+https://github.com/borlaym/cantrip-validate-number.git",
+    "cantrip-validate-string": "git+https://github.com/borlaym/cantrip-validate-string.git"
   },
   "devDependencies": {
     "load-grunt-tasks": "~0.4.0",

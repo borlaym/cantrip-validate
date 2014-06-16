@@ -1,10 +1,19 @@
 var _ = require("lodash");
+var fs = require("fs");
 
 var validations = {};
-validations.string = require("./types/string");
-validations.boolean = require("./types/boolean");
-validations.number = require("./types/number");
 
+//Load all installed validations from node_modules. Directory names should start with "cantrip-validate-"
+var dirs = fs.readdirSync("./node_modules");
+for (var i = 0; i < dirs.length; i++) {
+	if(fs.statSync("./node_modules/" + dirs[i]).isDirectory()) {
+		if (dirs[i].indexOf("cantrip-validate-") === 0) {
+			validations[dirs[i].replace("cantrip-validate-", "")] = require(dirs[i]);
+		}
+	}
+}
+
+console.log(validations);
 
 var validation = {
 	/**
