@@ -2,7 +2,7 @@
   "name": "cantrip-validate",
   "version": "0.0.1",
   "description": "Add validation to Cantrip",
-  "main": "server.js",
+  "main": "index.js",
   "dependencies": {
     "lodash": "~2.4.1",
     "cantrip-validate-boolean": "git+https://github.com/borlaym/cantrip-validate-boolean.git",
@@ -15,7 +15,8 @@
     "grunt-nodemon": "~0.2.1",
     "grunt-contrib-jasmine": "^0.6.3",
     "request": "^2.34.0",
-    "grunt-jasmine-node": "~0.2.1"
+    "grunt-jasmine-node": "~0.2.1",
+    "Cantrip": "git+https://github.com/KriekApps/Cantrip.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

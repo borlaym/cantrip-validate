@@ -13,9 +13,7 @@ for (var i = 0; i < dirs.length; i++) {
 	}
 }
 
-console.log(validations);
-
-var validation = {
+var Validation = {
 	/**
 	 * The wrapper method for validation. Checks if we have validation in our JSON.
 	 * If we do, it runs the data through it, returning either true or false based on whether the data passed the test or not.
@@ -25,8 +23,12 @@ var validation = {
 	 * @return {boolean}
 	 */
 	validate: function(req, res, next) {
-		var validation = this.getValidation("root", req);
-		return next(validation && this.validateObject(request.body, validation, req));
+		var validation = Validation.getValidation("root", req);
+		if (validation) {
+			next(Validation.validateObject(req.body, validation, req));
+		} else {
+			next();			
+		}
 	},
 	/**
 	 * Gets a validation object from the metadata.
@@ -66,19 +68,19 @@ var validation = {
 	validateObject: function(object, validation, req) {
 		//If object is not an object return error
 		if (!_.isObject(object)) {
-			req.response.status(400).send({
-				"error": "Type error. Expected object, found " + object + "."
-			});
-			return false;
+			return {
+				status: 400,
+				error: "Type error. Expected object, found " + object + "."
+			};
 		}
 		//If the posted object doesn't contain all keys needed for the validation, throw an error
 		//But only if the object is not equal to the request body, because when we PUT the object, we don't want to specify all keys
 		for (var key in validation) {
 			if (object[key] === undefined && object !== req.body) {
-				req.response.status(400).send({
-					"error": "Type error. Missing key "+key+"."
-				});
-				return false;
+				return {
+					status: 400,
+					error: "Type error. Missing key "+key+"."
+				};
 			}
 		}
 		//Loop through the keys in the posted object
@@ -86,32 +88,31 @@ var validation = {
 			var v = validation[key];
 			//return false if we try to validate a key that doesn't exist in the schema
 			if (v === undefined) {
-				req.response.status(400).send({
-					"error": "Type error. Invalid key "+key+" in object."
-				});
-				return false;
+				return {
+					status: 400,
+					error: "Type error. Invalid key "+key+" in object."
+				};
 			}
 			//Check type
-			if (!this.checkType(object[key], v, req)) {
+			if (!Validation.checkType(object[key], v, req)) {
 				var correctType = v.type === "object" || v.type === "collection" ? v.schema : v.type;
-				req.response.status(400).send({
-					"error": "Type error. Key " + key + " must be of type " + correctType
-				});
-				return false;
+				return {
+					status: 400,
+					error: "Type error. Key " + key + " must be of type " + correctType
+				};
 			}
 			
 			//Now run all custom validations defined in an array in the key "validation"
 			if (v.validation) {
 				var customValidation = validations[v.type].validate(object[key], v.validation);
 				if (!customValidation.valid) {
-					req.response.status(400).send({
-						"error": "Validation error with key "+key+". " + customValidation.message
-					});
-					return false;
+					return {
+						status: 400,
+						error: "Validation error with key "+key+". " + customValidation.message
+					};
 				}
 			}
 		}
-		return true;
 	},
 	checkType: function(value, validation, req) {
 		var type = validation.type;
@@ -127,7 +128,7 @@ var validation = {
 		} else if (type === "object") {
 			//If we specified a schema, then the object must be of a given shema. If we didn't, its free for all!
 			if (validation.schema === undefined && _.isObject(value)) return true;
-			if (this.validateObject(value, this.getValidation(validation.schema, req), req)) return true;
+			if (!this.validateObject(value, this.getValidation(validation.schema, req), req)) return true;
 			else return false;
 		} else if (type === "collection") {
 			if (validation.schema === undefined && _.isArray(value)) return true;
@@ -135,7 +136,7 @@ var validation = {
 				if (_.indexOf(["string", "number", "boolean"], validation.schema) > -1) {
 					var valid = true;
 					for (var i = 0; i < value.length; i++) {
-						if (!this.checkType(value[i], {
+						if (!Validation.checkType(value[i], {
 							type: validation.schema
 						}, req)) valid = false;
 					}
@@ -144,7 +145,7 @@ var validation = {
 					var valid = true;
 					for (var i = 0; i < value.length; i++) {
 						if (!_.isObject(value[i])) valid = false;
-						if (!this.validateObject(value[i], this.getValidation(validation.schema, req), req)) valid = false;
+						if (this.validateObject(value[i], this.getValidation(validation.schema, req), req)) valid = false;
 					}
 					return valid;
 				}
@@ -153,4 +154,4 @@ var validation = {
 	}
 }
 
-module.exports = validation.validate;
+module.exports = Validation.validate;
