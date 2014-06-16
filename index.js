@@ -24,6 +24,7 @@ var Validation = {
 	 */
 	validate: function(req, res, next) {
 		var validation = Validation.getValidation("root", req);
+		console.log(validation);
 		if (validation) {
 			next(Validation.validateObject(req.body, validation, req));
 		} else {
@@ -46,9 +47,9 @@ var Validation = {
 			}
 			var validation = schema["root"];
 			//go through the schema following the path
-			for (var i = 0; i < req.path.length; i++) {
-				if (validation[req.path[i]] !== undefined) {
-					validation = validation[req.path[i]];
+			for (var i = 0; i < req.pathMembers.length; i++) {
+				if (validation[req.pathMembers[i]] !== undefined) {
+					validation = validation[req.pathMembers[i]];
 					//if it's an object, get out of the current type and search for that type on the schema root
 					if (validation.type === "object") {
 						validation = schema[validation.schema];
