@@ -6,30 +6,18 @@ validations.boolean = require("./types/boolean");
 validations.number = require("./types/number");
 
 
-var validate = {
-	getSchema: function() {
-		if (this.data._schema !== undefined) {
-			return this.data._schema;
-		} else {
-			return false;
-		}
-	},
+var validation = {
 	/**
-	 * The wrapper method for validation. Creates a Request object, then checks if we have validation in our JSON.
+	 * The wrapper method for validation. Checks if we have validation in our JSON.
 	 * If we do, it runs the data through it, returning either true or false based on whether the data passed the test or not.
 	 * If the JSON doesn't support validation, it automatically returns true.
 	 * @param  {Object} request From Express
 	 * @param  {Object} response From Express
 	 * @return {boolean}
 	 */
-	validate: function(request, response) {
-		var req = new Request(request, response);
+	validate: function(req, res, next) {
 		var validation = this.getValidation("root", req);
-		if (validation) {
-			return this.validateObject(request.body, validation, req);
-		} else {
-			return true;
-		}
+		return next(validation && this.validateObject(request.body, validation, req));
 	},
 	/**
 	 * Gets a validation object from the metadata.
@@ -38,23 +26,23 @@ var validate = {
 	 * @return {Object}          Returns a validation object. If it doesn't exists, returns false.
 	 */
 	getValidation: function(typeName, req) {
-		var metadata = this.getSchema();
-		if (metadata) {
-			//When we check the root, we go through the metadata following the path.
+		var schema = req.data._schema;
+		if (schema) {
+			//When we check the root, we go through the schema following the path.
 			//When we use this function later to dig into another type in the schema, we just return that object
 			if (typeName !== "root") {
-				return metadata[typeName];
+				return schema[typeName];
 			}
-			var validation = metadata[typeName];
-			//go through the metadata following the path
+			var validation = schema["root"];
+			//go through the schema following the path
 			for (var i = 0; i < req.path.length; i++) {
 				if (validation[req.path[i]] !== undefined) {
 					validation = validation[req.path[i]];
-					//if it's an object, get out of the current type and search for that type on the metadata root
+					//if it's an object, get out of the current type and search for that type on the schema root
 					if (validation.type === "object") {
-						validation = metadata[validation.schema];
+						validation = schema[validation.schema];
 					} else if (validation.type === "collection") {
-						validation = metadata[validation.schema];
+						validation = schema[validation.schema];
 					}
 				} else {
 					//We are in a model inside a collection
@@ -77,7 +65,7 @@ var validate = {
 		//If the posted object doesn't contain all keys needed for the validation, throw an error
 		//But only if the object is not equal to the request body, because when we PUT the object, we don't want to specify all keys
 		for (var key in validation) {
-			if (object[key] === undefined && object !== req.request.body) {
+			if (object[key] === undefined && object !== req.body) {
 				req.response.status(400).send({
 					"error": "Type error. Missing key "+key+"."
 				});
@@ -156,4 +144,4 @@ var validate = {
 	}
 }
 
-module.exports = Cantrip;
+module.exports = validation.validate;
