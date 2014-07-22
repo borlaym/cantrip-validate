@@ -34,13 +34,16 @@ var Validation = {
 			if (_.last(path) === "") path.pop(); 
 			path.splice(0,1);
 			while (path.length > 0) {
-				var node = path.pop();
-				schema = schema.properties[node];
+				var node = path.splice(0,1);
+				if (schema.type === "object") {
+					schema = schema.properties[node];
+				} else {
+					schema = schema.items;
+				}
 			}
 
 			//if the request is a POST to an array, we need to make an additional step
-			schema = schema.items;
-
+			if (req.method === "POST") schema = schema.items;
 			callback(schema);
 
 		});
