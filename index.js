@@ -14,6 +14,14 @@ var Validation = {
 		if (req.method === "GET") return next();
 		Validation.getValidation(req, function(schema) {
 			var v = validate(req.body, schema);
+
+			//If this is a PUT request, ignore 'required' errors
+			if (req.method === "PUT") {
+				v.errors = _.filter(v.errors, function(error) {
+					return error.message.indexOf("requires ") === -1;
+				});
+			}
+
 			if (v.errors.length === 0) next();
 			else {
 				next(v.errors);
