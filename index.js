@@ -38,6 +38,9 @@ var Validation = {
 				schema = schema.properties[node];
 			}
 
+			//if the request is a POST to an array, we need to make an additional step
+			schema = schema.items;
+
 			callback(schema);
 
 		});
